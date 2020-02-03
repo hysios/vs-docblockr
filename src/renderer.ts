@@ -150,7 +150,7 @@ export class Renderer {
     const column: number = this.config.get('columnSpacing');
     // Parameter tags shouldn't be needed if no parameter tokens are available,
     // or if the code is a class property or variable
-    if (tokens.params.length && tokens.type !== 'variable') {
+    if (tokens.params.length && tokens.type !== vscode.SymbolKind.Variable) {
       // Empty line
       blockList.push('');
       // Determine if any parameters contain defined type information for
@@ -248,7 +248,7 @@ export class Renderer {
     // Determine whether or not to display the return type by default
     const defaultReturnTag: boolean = this.config.get('defaultReturnTag');
     // Check if return section should be displayed
-    if (tokens.return.present && defaultReturnTag && tokens.type !== 'variable') {
+    if (tokens.return.present && defaultReturnTag && tokens.type !== vscode.SymbolKind.Variable) {
       let type = this.typePlaceholder;
       // Check if a return type was provided
       if (tokens.return.type) {
@@ -306,7 +306,7 @@ export class Renderer {
     placeholder: (str: string) => string,
   ): string[] {
     // Add special case of variable blocks
-    if (tokens.type === 'variable') {
+    if (tokens.type === vscode.SymbolKind.Variable) {
       // Empty line
       blockList.push('');
       // Format type to be tab-able

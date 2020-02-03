@@ -1,3 +1,5 @@
+import { SymbolKind } from 'vscode';
+
 /**
  * Describes a function parameter
  */
@@ -44,7 +46,7 @@ export class Tokens {
   /**
    * What type of code it is. (class, function, variable)
    */
-  public type: string = '';
+  public type: SymbolKind;
 
   /**
    * When `Tokens.type` is variable, this optional value refers to that

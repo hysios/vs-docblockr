@@ -16,7 +16,7 @@ import { Parser } from './parser';
 // Auto-completion rules
 import { Rules } from './rules';
 
-import { PHP } from './languages/php';
+import { PHP } from './languages/php/parser';
 
 export function activate(context: ExtensionContext) {
   // Associative list of allowed languages
