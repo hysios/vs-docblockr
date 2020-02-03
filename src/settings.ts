@@ -3,18 +3,6 @@
  */
 
 /**
- * Grammar definition for handling differences in languages
- */
-export interface Grammar {
-  function:   string;
-  class:      string;
-  identifier: string;
-  modifiers:  string[];
-  variables:  string[];
-  types:      string[];
-}
-
-/**
  * Options object
  *
  * Can have any property name
@@ -41,18 +29,6 @@ export class Settings {
    * End of doc block string
    */
   public eos: string = '\n';
-
-  /**
-   * Grammar definitions for language
-   */
-  public grammar: Grammar = {
-    class:      '',
-    function:   '',
-    identifier: '',
-    modifiers:  [''],
-    types:      [''],
-    variables:  [''],
-  };
 
   /**
    * The beginning set of characters for a doc block

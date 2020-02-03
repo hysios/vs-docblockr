@@ -16,26 +16,14 @@ import { Parser } from './parser';
 // Auto-completion rules
 import { Rules } from './rules';
 
-// Language specific code parsers
-import { C } from './languages/c';
-import { Java } from './languages/java';
-import { JavaScript } from './languages/javascript';
 import { PHP } from './languages/php';
-import { Scss } from './languages/scss';
-import { TypeScript } from './languages/typescript';
 
 export function activate(context: ExtensionContext) {
   // Associative list of allowed languages
   // Scheme as follows:
   //   language ID: class name
   const langList = {
-    c: C,
-    java: Java,
-    javascript: JavaScript,
     php: PHP,
-    scss: Scss,
-    typescript: TypeScript,
-    vue: TypeScript,
   };
   // Register each language
   for (const language in langList) {

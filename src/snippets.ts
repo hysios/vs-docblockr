@@ -12,7 +12,7 @@ import {
   Range,
   SnippetString,
   TextDocument,
-  window } from 'vscode';
+} from 'vscode';
 import { Parser } from './parser';
 
 /**
@@ -63,11 +63,11 @@ export class Snippets implements CompletionItemProvider {
    * @return  {CompletionItem[]}             List of completion items for
    *                                         auto-completion
    */
-  public provideCompletionItems(
+  public async provideCompletionItems(
     document: TextDocument,
     position: Position,
     token:    CancellationToken,
-  ): CompletionItem[] {
+  ): Promise<CompletionItem[]> {
     // Create empty list of auto-completion items
     // This will be returned at the end
     const result: CompletionItem[] = [];
@@ -86,7 +86,7 @@ export class Snippets implements CompletionItemProvider {
         'c',
         'scss',
       ];
-      // For any language that doesn't replace the autocompletelion string,
+      // For any language that doesn't replace the autocompletion string,
       // reset the range to prevent malformed comment blocks.
       if (difficultLangs.includes(document.languageId)) {
         item.range = range;
@@ -94,17 +94,21 @@ export class Snippets implements CompletionItemProvider {
 
       // Parse the code below the current cursor position and return generated
       // docblock string
-      const docBlock = this.parser.init(window.activeTextEditor);
-      // In order for the snippet to display we need to convert it a snippet
-      // string
-      item.insertText = new SnippetString(docBlock);
-      // Display details for docblock string
-      item.detail = 'VS DocBlockr';
-      // Push auto-completion item to result list
-      // Should be the only one in this instance
-      result.push(item);
+      return await this.parser.init().then((docBlock) => {
+        // In order for the snippet to display we need to convert it a snippet
+        // string
+        item.insertText = new SnippetString(docBlock);
+        // Display details for docblock string
+        item.detail = 'VS DocBlock';
+        // Push auto-completion item to result list
+        // Should be the only one in this instance
+        result.push(item);
+
+        return result;
+      });
+    } else {
+      return result;
     }
-    return result;
   }
 
   /**

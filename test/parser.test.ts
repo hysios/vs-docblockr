@@ -1,12 +1,12 @@
 import * as assert from 'assert';
 import { Tokens } from '../src/tokens';
-import { JavaScript } from '../src/languages/javascript';
+import { TypeScript } from '../src/languages/typescript';
 
 suite('Parser', () => {
   suite('renderBlock', () => {
     test('don\'t return docblock with trailing whitespace', () => {
       // Use the JavaScript parser for the sake of setup
-      const parser = new JavaScript();
+      const parser = new TypeScript();
 
       const token: Tokens = {
         name: 'foo',
