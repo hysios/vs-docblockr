@@ -76,7 +76,7 @@ export class Parser {
     });
   }
 
-  protected parseClass(symbol: DocumentSymbol, tokens: Tokens) {
+  protected parseClass(symbol: DocumentSymbol, tokens: Tokens): Tokens {
     if (symbol.kind === SymbolKind.Class) {
       tokens.name = symbol.name;
       tokens.type = SymbolKind.Class;
@@ -86,7 +86,15 @@ export class Parser {
     return tokens;
   }
 
-  protected parseFunction(symbol: DocumentSymbol, tokens: Tokens) {
+  /**
+   * Tokenize a `DocumentSymbol` if it is a function
+   *
+   * @param  symbol  The code snippet represented as a `DocumentSymbol`
+   * @param  tokens  Any tokens that have been created from the snippet
+   *
+   * @return         @TODO
+   */
+  protected parseFunction(symbol: DocumentSymbol, tokens: Tokens): Tokens {
     const functionTypes = [
       SymbolKind.Function,
       SymbolKind.Method,
@@ -101,14 +109,9 @@ export class Parser {
 
         const { range } = window.activeTextEditor.document.lineAt(position.line + 1);
 
-        console.log(range);
-
         const filtered = symbol.children.filter((child) => {
           return range.contains(child.range);
         });
-
-        console.log(symbol.children);
-        console.log(filtered);
 
         filtered.forEach((child) => {
           tokens.params.push({
@@ -122,7 +125,7 @@ export class Parser {
     return tokens;
   }
 
-  protected parseVariable(symbol: DocumentSymbol, tokens: Tokens) {
+  protected parseVariable(symbol: DocumentSymbol, tokens: Tokens): Tokens {
     if (symbol.kind === SymbolKind.Variable) {
       tokens.name = symbol.name;
       tokens.type = SymbolKind.Variable;
