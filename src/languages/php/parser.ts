@@ -17,16 +17,10 @@ export class PHP extends Parser {
     tokens = super.parseFunction(symbol, tokens);
 
     if (symbol.children) {
-      const { activeTextEditor } = window;
+      symbol.children.forEach((child) => {
+        const { document } = window.activeTextEditor;
 
-      const line = activeTextEditor.selection.active.line + 1;
-      const { range } = activeTextEditor.document.lineAt(line);
-
-      symbol.children.filter((child) => range.contains(child.range)).forEach((child) => {
-        tokens.params.push({
-          name: child.name,
-          val: '',
-        });
+        const snippet = document.getText(child.range);
       });
     }
 

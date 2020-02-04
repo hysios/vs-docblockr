@@ -3,12 +3,7 @@
 import { Renderer } from './renderer';
 import { Tokens } from './tokens';
 
-import {
-  commands,
-  DocumentSymbol,
-  SymbolKind,
-  window,
-} from 'vscode';
+import { commands, DocumentSymbol, Position, SymbolKind, window} from 'vscode';
 
 export class Parser {
   public async init(): Promise<string> {
@@ -22,18 +17,26 @@ export class Parser {
   }
 
   /**
+   * Retrieve the range of the code currently being parsed
+   *
+   * @return The range of the code being parsed
+   */
+  protected getActivePosition(): Position {
+    const { activeTextEditor } = window;
+
+    return activeTextEditor.selection.active;
+  }
+
+  /**
    * Fetch the document symbol underneath the currently selected line
    *
    * @return A array with the selected code snippet
    */
-  public async getSymbols(): Promise<DocumentSymbol[]> {
-    const { activeTextEditor } = window;
-
-    const { uri } = activeTextEditor.document;
-    const position = activeTextEditor.selections[0].active;
+  public async getSymbol(): Promise<DocumentSymbol> {
+    const { uri } = window.activeTextEditor.document;
 
     // Retrieve a selection range below the currently highlighted line
-    const { range }  = activeTextEditor.document.lineAt(position.line + 1);
+    const position  = this.getActivePosition();
 
     const command = 'vscode.executeDocumentSymbolProvider';
 
@@ -44,14 +47,16 @@ export class Parser {
       symbols.push(...symbol.children);
     });
 
-    console.log(range);
+    console.log(symbols);
+
+    symbols = symbols.filter((symbol) => {
+      // Only retrieve the symbol that is below the currently selected line
+      return symbol.range.contains(position);
+    });
 
     console.log(symbols);
 
-    return symbols.filter((symbol) => {
-      // Only retrieve the symbol that is below the currently selected line
-      return symbol.range.contains(range)
-    });
+    return symbols.pop();
   }
 
   /**
@@ -62,12 +67,10 @@ export class Parser {
   public async tokenize(): Promise<Tokens> {
     let tokens = new Tokens();
 
-    return await this.getSymbols().then((symbols) => {
-      symbols.forEach((symbol) => {
-        tokens = this.parseClass(symbol, tokens);
-        tokens = this.parseFunction(symbol, tokens);
-        tokens = this.parseVariable(symbol, tokens);
-      });
+    return await this.getSymbol().then((symbol) => {
+      tokens = this.parseClass(symbol, tokens);
+      tokens = this.parseFunction(symbol, tokens);
+      tokens = this.parseVariable(symbol, tokens);
 
       return tokens;
     });
@@ -77,6 +80,7 @@ export class Parser {
     if (symbol.kind === SymbolKind.Class) {
       tokens.name = symbol.name;
       tokens.type = SymbolKind.Class;
+      tokens.return.present = false;
     }
 
     return tokens;
@@ -91,6 +95,28 @@ export class Parser {
     if (functionTypes.includes(symbol.kind)) {
       tokens.name = symbol.name;
       tokens.type = SymbolKind.Function;
+
+      if (symbol.children) {
+        const position = this.getActivePosition();
+
+        const { range } = window.activeTextEditor.document.lineAt(position.line + 1);
+
+        console.log(range);
+
+        const filtered = symbol.children.filter((child) => {
+          return range.contains(child.range);
+        });
+
+        console.log(symbol.children);
+        console.log(filtered);
+
+        filtered.forEach((child) => {
+          tokens.params.push({
+            name: child.name,
+            val: '',
+          });
+        });
+      }
     }
 
     return tokens;

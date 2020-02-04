@@ -76,12 +76,17 @@ export class Renderer {
     // Var tag
     blockList = this.renderVarTag(tokens, blockList, placeholder);
 
-    const eos = this.settings.eos;
-    // Join together each docblock piece, use the `End of String` var in settings
-    // to concatenated
-    let block = this.settings.commentOpen + eos + blockList.map((blockLine) => {
-      return this.settings.separator + blockLine;
-    }).join(eos) + eos + this.settings.commentClose;
+    const {
+      commentClose,
+      commentOpen,
+      eos,
+      separator,
+    } = this.settings;
+
+    let block = commentOpen + eos + blockList.map((blockLine) => {
+      return separator + blockLine;
+    }).join(eos) + eos + commentClose;
+
     // Attempt to strip out trailing whitespace
     block = block.replace(/\s$/gm, '');
 
@@ -91,14 +96,17 @@ export class Renderer {
   /**
    * Generates an empty doc block string when nothing was successfully parsed
    *
-   * @return  {string}  Empty doc block string
+   * @return  Empty doc block string
    */
   public renderEmptyBlock(): string {
-    const eos = this.settings.eos;
-    // Join together each docblock piece, use the `End of String` var in
-    // settings to concatenated
-    return this.settings.commentOpen + eos + this.settings.separator + eos +
-      this.settings.commentClose;
+    const {
+      commentClose,
+      commentOpen,
+      eos,
+      separator,
+    } = this.settings;
+
+    return commentOpen + eos + separator + eos + commentClose;
   }
 
   /**
