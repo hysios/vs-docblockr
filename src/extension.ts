@@ -16,14 +16,23 @@ import { Parser } from './parser';
 // Auto-completion rules
 import { Rules } from './rules';
 
+import { Cpp } from './languages/cpp/parser';
+import { Java } from './languages/java/parser';
 import { PHP } from './languages/php/parser';
+import { TypeScript } from './languages/typescript/parser';
 
 export function activate(context: ExtensionContext) {
   // Associative list of allowed languages
   // Scheme as follows:
   //   language ID: class name
   const langList = {
+    c: Cpp,
+    cpp: Cpp,
+    csharp: Cpp,
+    java: Java,
+    javascript: TypeScript,
     php: PHP,
+    typescript: TypeScript,
   };
   // Register each language
   for (const language in langList) {

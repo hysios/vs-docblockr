@@ -105,6 +105,10 @@ export class Snippets implements CompletionItemProvider {
         result.push(item);
 
         return result;
+      }).then(undefined, (error) => {
+        console.error(error);
+
+        return result;
       });
     } else {
       return result;

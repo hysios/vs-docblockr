@@ -10,13 +10,15 @@
     "url": "https://github.com/jeremyvii/vs-docblockr"
   },
   "engines": {
-    "vscode": "^1.40.1"
+    "vscode": "^1.41.0"
   },
   "categories": [
     "Other"
   ],
   "activationEvents": [
     "onLanguage:c",
+    "onLanguage:cpp",
+    "onLanguage:csharp",
     "onLanguage:javascript",
     "onLanguage:php",
     "onLanguage:typescript",
