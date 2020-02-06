@@ -1,7 +1,7 @@
 import { Parser } from '../../parser';
 import { Tokens } from '../../tokens';
 
-import { DocumentSymbol, window } from 'vscode';
+import { DocumentSymbol } from 'vscode';
 
 export class Cpp extends Parser {
   /**

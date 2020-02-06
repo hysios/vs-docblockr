@@ -105,6 +105,7 @@
   "dependencies": {
     "character-parser": "*",
     "fs": "0.0.1-security",
-    "is-expression": "*"
+    "is-expression": "*",
+    "os": "^0.1.1"
   }
 }

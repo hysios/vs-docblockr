@@ -1,5 +1,5 @@
-import { Tokens } from './tokens';
 import { Settings } from './settings';
+import { Tokens } from './tokens';
 
 import * as vscode from 'vscode';
 
