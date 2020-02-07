@@ -1,3 +1,4 @@
+import { Parser } from './parser';
 import { Settings } from './settings';
 import { Tokens } from './tokens';
 
@@ -109,6 +110,12 @@ export class Renderer {
     return commentOpen + eos + separator + eos + commentClose;
   }
 
+  protected renderEmptyLine(blockList: string[]): string[] {
+    blockList.push('');
+
+    return blockList;
+  }
+
   /**
    * Renders parameter tag template for docblock
    *
@@ -124,7 +131,7 @@ export class Renderer {
    *
    * @return  {string}        Rendered parameter tag
    */
-  public getParamTag(
+  protected getParamTag(
     c:    string,
     type: string,
     t:    string,
@@ -132,9 +139,11 @@ export class Renderer {
     p:    string,
     desc: string): string {
     let tag = `@param${c} ${type}${t}${name}${p}${desc}`;
+
     if (this.style === 'drupal') {
       tag = `@param ${type} ${name}\n${this.settings.separator}  ${desc}`;
     }
+
     return tag;
   }
 
@@ -149,70 +158,73 @@ export class Renderer {
    *                                   list. Returns list pasted in if no
    *                                   parameters
    */
-  public renderParamTags(
+  protected renderParamTags(
     tokens: Tokens,
     blockList: string[],
     placeholder: (str: string) => string,
   ): string[] {
-    // Get column spacing from configuration object
-    const column: number = this.config.get('columnSpacing');
     // Parameter tags shouldn't be needed if no parameter tokens are available,
     // or if the code is a class property or variable
-    if (tokens.params.length && tokens.type !== vscode.SymbolKind.Variable) {
-      // Empty line
-      blockList.push('');
-      // Determine if any parameters contain defined type information for
-      // calculating type spacing
-      const hasType = tokens.params.some((param) => param.hasOwnProperty('type'));
-      // Iterator over list of parameters
-      for (const param of tokens.params) {
-        // Define type placeholder in the instance none was provided
-        const noType = this.typePlaceholder;
-        // Calculate difference in name size
-        const diff = this.maxParams(tokens, 'name') - param.name.length;
-        // Calculate total param name spaces
-        const pSpace = Array((column + 1) + diff).join(' ');
-        // Define typeDiff as 1 to ensure there is at least one space between
-        // type and parameter name in docblock
-        let typeDiff = 1;
-        // Check if any params have a defined type, if no the type space
-        // difference should default to 1
-        if (hasType) {
-          // Get maximum parameter type size
-          const tDiff = this.maxParams(tokens, 'type');
-          // Check if current parameter has a defined type
-          if (param.hasOwnProperty('type')) {
-            // Calculate difference between longest type and current type
-            // The added 1 fixes size discrepancies
-            typeDiff = tDiff - param.type.length + 1;
-          } else {
-            // Account for parameters without types by getting length of type
-            // placeholder
-            typeDiff = tDiff - noType.length + 1;
-          }
-        }
-        // Calculate type spacing
-        const tSpace = Array((column) + typeDiff).join(' ');
-        // Shortcut for column space
-        const cSpace = this.columns;
-        // Define parameter type
-        let type = '';
-        // Check if parameter has a type
+    if (tokens.params.length && Parser.isFunction(tokens.type)) {
+      return blockList;
+    }
+
+    // Get column spacing from configuration object
+    const column: number = this.config.get('columnSpacing');
+
+    blockList = this.renderEmptyLine(blockList);
+
+    // Determine if any parameters contain defined type information for
+    // calculating type spacing
+    const hasType = tokens.params.some((param) => param.hasOwnProperty('type'));
+    // Iterator over list of parameters
+    for (const param of tokens.params) {
+      // Define type placeholder in the instance none was provided
+      const noType = this.typePlaceholder;
+      // Calculate difference in name size
+      const diff = this.maxParams(tokens, 'name') - param.name.length;
+      // Calculate total param name spaces
+      const pSpace = Array((column + 1) + diff).join(' ');
+      // Define typeDiff as 1 to ensure there is at least one space between
+      // type and parameter name in docblock
+      let typeDiff = 1;
+      // Check if any params have a defined type, if no the type space
+      // difference should default to 1
+      if (hasType) {
+        // Get maximum parameter type size
+        const tDiff = this.maxParams(tokens, 'type');
+        // Check if current parameter has a defined type
         if (param.hasOwnProperty('type')) {
-          // Get parameter type from token object
-          type = placeholder(this.escape(param.type));
+          // Calculate difference between longest type and current type
+          // The added 1 fixes size discrepancies
+          typeDiff = tDiff - param.type.length + 1;
         } else {
-          // Use param type placeholder
-          type = placeholder(noType);
+          // Account for parameters without types by getting length of type
+          // placeholder
+          typeDiff = tDiff - noType.length + 1;
         }
-        // Prevent tabstop conflicts
-        const name = this.escape(param.name);
-        // Description shortcut
-        const desc = placeholder(`[${name} description]`);
-        // Append param to docblock
-        blockList.push(this.getParamTag(cSpace, type, tSpace, name, pSpace,
-          desc));
       }
+      // Calculate type spacing
+      const tSpace = Array((column) + typeDiff).join(' ');
+      // Shortcut for column space
+      const cSpace = this.columns;
+      // Define parameter type
+      let type = '';
+      // Check if parameter has a type
+      if (param.hasOwnProperty('type')) {
+        // Get parameter type from token object
+        type = placeholder(this.escape(param.type));
+      } else {
+        // Use param type placeholder
+        type = placeholder(noType);
+      }
+      // Prevent tabstop conflicts
+      const name = this.escape(param.name);
+      // Description shortcut
+      const desc = placeholder(`[${name} description]`);
+      // Append param to docblock
+      blockList.push(this.getParamTag(cSpace, type, tSpace, name, pSpace,
+        desc));
     }
     return blockList;
   }
@@ -227,11 +239,13 @@ export class Renderer {
    *
    * @return  {string}           Rendered return tag
    */
-  public getReturnTag(type: string, spacing: string, desc: string): string {
+  protected getReturnTag(type: string, spacing: string, desc: string): string {
     let tag = `@return${this.columns}${type}${spacing}${desc}`;
+
     if (this.style === 'drupal') {
       tag = `@return ${type}\n${this.settings.separator}  ${desc}`;
     }
+
     return tag;
   }
 
@@ -246,24 +260,28 @@ export class Renderer {
    *                                   Returns list provided if variable or no
    *                                   return tag
    */
-  public renderReturnTag(
+  protected renderReturnTag(
     tokens: Tokens,
     blockList: string[],
     placeholder: (str: string) => string,
   ): string[] {
+    if (!Parser.isFunction(tokens.type)) {
+      return blockList;
+    }
+
     // Get column spacing from configuration object
     const column: number = this.config.get('columnSpacing');
     // Determine whether or not to display the return type by default
     const defaultReturnTag: boolean = this.config.get('defaultReturnTag');
     // Check if return section should be displayed
-    if (tokens.return.present && defaultReturnTag && tokens.type !== vscode.SymbolKind.Variable) {
+    if (tokens.return.present && defaultReturnTag) {
       let type = this.typePlaceholder;
       // Check if a return type was provided
       if (tokens.return.type) {
         type = this.escape(tokens.return.type);
       }
       // Empty line
-      blockList.push('');
+      blockList = this.renderEmptyLine(blockList);
       // Get maximum param size
       const diff = this.maxParams(tokens, 'name');
       const tDiff = this.maxParams(tokens, 'type');
@@ -289,12 +307,10 @@ export class Renderer {
    * Renders var tag with property type and computed spacing
    *
    * @param   {string}  columns  Computed spaces between tag and type
-   * @param   {string}  type     Type associated with property value (in docblock
-   *                             not this method)
    *
    * @return  {string}           Rendered property tag
    */
-  public getVarTag(columns: string, type: string): string {
+  protected getVarTag(type: string): string {
     return `@var ${type}`;
   }
 
@@ -308,20 +324,22 @@ export class Renderer {
    * @return  {string[]}               Var block appended to block list.
    *                                   Returns list provided if not a variable
    */
-  public renderVarTag(
+  protected renderVarTag(
     tokens: Tokens,
     blockList: string[],
     placeholder: (str: string) => string,
   ): string[] {
-    // Add special case of variable blocks
-    if (tokens.type === vscode.SymbolKind.Variable) {
-      // Empty line
-      blockList.push('');
-      // Format type to be tab-able
-      const type: string = placeholder(tokens.varType ? tokens.varType : `[type]`);
-      // Var type
-      blockList.push(this.getVarTag(this.columns, type));
+    if (!Parser.isVariable(tokens.type)) {
+      return blockList;
     }
+
+    blockList = this.renderEmptyLine(blockList);
+
+    // Format type to be tab-able
+    const type = tokens.varType ? tokens.varType : this.typePlaceholder;
+
+    blockList.push(this.getVarTag(placeholder(type)));
+
     return blockList;
   }
 

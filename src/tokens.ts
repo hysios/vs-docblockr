@@ -12,7 +12,7 @@ export interface Param {
   /**
    * Parameter's value. Usually empty string if no parameter value is provided
    */
-  val: string;
+  val?: string;
 
   /**
    * Parameter's data type. This is usually language specific and is not

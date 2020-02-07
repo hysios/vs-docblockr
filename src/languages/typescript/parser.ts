@@ -36,7 +36,6 @@ export class TypeScript extends Parser {
 
         const param: Param = {
           name,
-          val: '',
         };
 
         if (type) {

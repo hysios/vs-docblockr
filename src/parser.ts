@@ -3,9 +3,66 @@ import { Tokens } from './tokens';
 
 import { commands, DocumentSymbol, Position, Range, SymbolKind, window } from 'vscode';
 
-// import { TokenizationRegistry } from 'vscode/editor/common/modes';
-
 export class Parser {
+  /**
+   * Checks if a `SymbolKind` is in the class whitelist
+   *
+   * This is used to check if a symbol is what this extension considers a class
+   *
+   * @param   kind  The `SymbolKind` to check
+   *
+   * @return        True if the `Symbol` kind is in the class whitelist
+   */
+  public static isClass(kind: SymbolKind): boolean {
+    const types = [
+      SymbolKind.Class,
+      SymbolKind.Namespace,
+      SymbolKind.Object,
+    ];
+
+    return types.includes(kind);
+  }
+
+  /**
+   * Checks if a `SymbolKind` is in the function whitelist
+   *
+   * This is used to check if a symbol is what this extension considers a
+   * function
+   *
+   * @param   kind  The `SymbolKind` to check
+   *
+   * @return        True if the `Symbol` kind is in the function whitelist
+   */
+  public static isFunction(kind: SymbolKind): boolean {
+    const types = [
+      SymbolKind.Constructor,
+      SymbolKind.Function,
+      SymbolKind.Method,
+    ];
+
+    return types.includes(kind);
+  }
+
+  /**
+   * Checks if a `SymbolKind` is in the variable whitelist
+   *
+   * This is used to check if a symbol is what this extension considers a
+   * variable
+   *
+   * @param   kind  The `SymbolKind` to check
+   *
+   * @return        True if the `Symbol` kind is in the variable whitelist
+   */
+  public static isVariable(kind: SymbolKind): boolean {
+    const types = [
+      SymbolKind.Constant,
+      SymbolKind.Property,
+      SymbolKind.Variable,
+    ];
+
+    return types.includes(kind);
+  }
+
   /**
    * Fetch the document symbol underneath the currently selected line
    *
@@ -29,15 +86,10 @@ export class Parser {
       symbols.push(...symbol.children);
     });
 
-    // console.log(position);
-    // console.log(symbols);
-
     symbols = symbols.filter((symbol) => {
       // Only retrieve the symbol that is below the currently selected line
-      return symbol.range.start.isAfterOrEqual(position);
+      return symbol.range.contains(position);
     });
-
-    // console.log(symbols);
 
     return symbols.pop();
   }
@@ -61,11 +113,12 @@ export class Parser {
     let tokens = new Tokens();
 
     return await this.getSymbol().then((symbol) => {
-      tokens = this.parseClass(symbol, tokens);
-      tokens = this.parseFunction(symbol, tokens);
-      tokens = this.parseVariable(symbol, tokens);
-
-      // console.log(tokens);
+      if (Parser.isClass(symbol.kind) || Parser.isVariable(symbol.kind)) {
+        tokens.name = symbol.name;
+        tokens.type = symbol.kind;
+      } else {
+        tokens = this.parseFunction(symbol, tokens);
+      }
 
       return tokens;
     });
@@ -84,47 +137,6 @@ export class Parser {
     return window.activeTextEditor.document.getText(range);
   }
 
-  protected isClass(symbol: DocumentSymbol): boolean {
-    const types = [
-      SymbolKind.Class,
-      SymbolKind.Constant,
-      SymbolKind.Namespace,
-      SymbolKind.Object,
-    ];
-
-    return types.includes(symbol.kind);
-  }
-
-  protected isFunction(symbol: DocumentSymbol): boolean {
-    const types = [
-      SymbolKind.Constructor,
-      SymbolKind.Function,
-      SymbolKind.Method,
-    ];
-
-    return types.includes(symbol.kind);
-  }
-
-  protected isVariable(symbol: DocumentSymbol): boolean {
-    const types = [
-      SymbolKind.Constant,
-      SymbolKind.Property,
-      SymbolKind.Variable,
-    ];
-
-    return types.includes(symbol.kind);
-  }
-
-  protected parseClass(symbol: DocumentSymbol, tokens: Tokens): Tokens {
-    if (this.isClass(symbol)) {
-      tokens.name = symbol.name;
-      tokens.type = SymbolKind.Class;
-      tokens.return.present = false;
-    }
-
-    return tokens;
-  }
-
   /**
    * Tokenize a `DocumentSymbol` if it is a function
    *
@@ -134,9 +146,9 @@ export class Parser {
    * @return         @TODO
    */
   protected parseFunction(symbol: DocumentSymbol, tokens: Tokens): Tokens {
-    if (this.isFunction(symbol)) {
+    if (Parser.isFunction(symbol.kind)) {
       tokens.name = symbol.name;
-      tokens.type = SymbolKind.Function;
+      tokens.type = symbol.kind;
 
       tokens = this.parserParameters(symbol, tokens);
     }
@@ -158,18 +170,8 @@ export class Parser {
       filtered.forEach((child) => {
         tokens.params.push({
           name: child.name,
-          val: '',
         });
       });
-    }
-
-    return tokens;
-  }
-
-  protected parseVariable(symbol: DocumentSymbol, tokens: Tokens): Tokens {
-    if (this.isVariable(symbol)) {
-      tokens.name = symbol.name;
-      tokens.type = SymbolKind.Variable;
     }
 
     return tokens;
